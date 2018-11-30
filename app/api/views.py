@@ -54,7 +54,7 @@ def catch(nfc_id):
     can_skip = Catch.query \
         .filter(Catch.currently_held.is_(True)) \
         .filter(Catch.timer_started_at.is_(None)) \
-        .filter(Catch.team_id != team.id) \
+        .filter(Catch.team_id == team.id) \
         .count()
     if all_catches == 0:
         catch = Catch(team_id=team.id, currently_held=True)
