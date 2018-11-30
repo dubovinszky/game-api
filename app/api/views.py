@@ -6,40 +6,56 @@ from app import db
 api = Blueprint('api', __name__)
 
 sql = """
-    WITH working_minutes AS (
+    WITH working_seconds AS (
     SELECT
-        work_minute
+        work_second
     FROM
         (SELECT
             generate_series(timestamp :from,
                             timestamp :to,
-                            '1 minute')
-        as work_minute) t
+                            '1 second')
+        as work_second) t
     WHERE
-        extract(isodow from work_minute) < 6
-        and cast(work_minute as time) between time '10:00' and time '23:59'
+        extract(isodow from work_second) < 6
+        and cast(work_second as time) between time '8:00' and time '23:59'
 )
 
 SELECT
     count(*) AS elapsed_hrs
 FROM
-    working_minutes
+    working_seconds
 WHERE
-    work_minute BETWEEN :from AND :to
+    work_second BETWEEN :from AND :to
 """
+
+
+def _make_response(json):
+    resp = jsonify(json)
+    resp.headers.add_header('Access-Control-Allow-Origin', '*')
+    return resp
 
 
 @api.route('/where', methods=['GET'])
 def where():
-    current_catch = Catch.query.filter_by(currently_held=True).first()
+    now = datetime.datetime.now()
+    if now.weekday() > 4 or now.hour < 8 or now.hour >= 16:
+        return _make_response({'team_name': None, 'time': None})
+
+    first_catch_date = datetime.datetime(now.year, now.month, now.day, 8, 0)
+    current_catch = Catch.query \
+        .filter(Catch.currently_held.is_(True)) \
+        .filter(Catch.timer_started_at > first_catch_date).first()
     if current_catch:
         team = Team.query.filter_by(id=current_catch.team_id).first()
-        import random
-        return jsonify({'team_name': team.name,
-                        'time': str(datetime.timedelta(
-                            seconds=random.randint(1, 86400)))})
+        catch_time = now - current_catch.timer_started_at
+        return _make_response({
+            'team_name': team.name,
+            'time': str(catch_time).split('.')[0]})
     else:
-        return make_response('***no one has it***', 200)
+        alone_time = now - first_catch_date
+        return _make_response({
+            'team_name': None,
+            'time': str(alone_time).split('.')[0]})
 
 
 @api.route('/catch/<nfc_id>', methods=['GET'])
@@ -90,15 +106,14 @@ def start_timer(nfc_id):
 
 @api.route('/heartbeat/<nfc_id>', methods=['GET'])
 def heartbeat(nfc_id):
-    team = Team.query.filter_by(nfc_id=nfc_id).first()
-    catch = Catch.query.filter(Catch.team_id == team.id) \
-        .filter(Catch.currently_held.is_(True)) \
-        .filter(Catch.timer_started_at.isnot(None)).first()
-    if catch:
-        res = db.session.execute(sql, {
-            'from': catch.timer_started_at,
-            'to': datetime.datetime.utcnow()})
-        return str(datetime.timedelta(seconds=res.first()[0] * 60))
+    # team = Team.query.filter_by(nfc_id=nfc_id).first()
+    # catch = Catch.query.filter(Catch.team_id == team.id) \
+    #     .filter(Catch.currently_held.is_(True)).first()
+    # if catch:
+    #     res = db.session.execute(sql, {
+    #         'from': catch.timer_started_at,
+    #         'to': datetime.datetime.utcnow()})
+    #     return str(datetime.timedelta(seconds=res.first()[0] * 60))
     return 'do nothin'
 
 
