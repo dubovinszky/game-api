@@ -1,5 +1,5 @@
 import datetime
-from flask import Blueprint, make_response, request
+from flask import Blueprint, make_response, request, jsonify
 from app.models import Catch, Team
 from app import db
 
@@ -34,7 +34,10 @@ def where():
     current_catch = Catch.query.filter_by(currently_held=True).first()
     if current_catch:
         team = Team.query.filter_by(id=current_catch.team_id).first()
-        return make_response('***' + team.name + '***', 200)
+        import random
+        return jsonify({'team_name': team.name,
+                        'time': str(datetime.timedelta(
+                            seconds=random.randint(1, 86400)))})
     else:
         return make_response('***no one has it***', 200)
 
