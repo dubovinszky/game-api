@@ -17,7 +17,7 @@ sql = """
         as work_second) t
     WHERE
         extract(isodow from work_second) < 6
-        and cast(work_second as time) between time '8:00' and time '23:59'
+        and cast(work_second as time) between time '9:00' and time '23:59'
 )
 
 SELECT
@@ -38,10 +38,10 @@ def _make_response(json):
 @api.route('/where', methods=['GET'])
 def where():
     now = datetime.datetime.now()
-    if now.weekday() > 4 or now.hour < 8 or now.hour >= 16:
+    if now.weekday() > 4 or now.hour < 9 or now.hour >= 16:
         return _make_response({'team_name': None, 'time': None})
 
-    first_catch_date = datetime.datetime(now.year, now.month, now.day, 8, 0)
+    first_catch_date = datetime.datetime(now.year, now.month, now.day, 9, 0)
     current_catch = Catch.query \
         .filter(Catch.currently_held.is_(True)) \
         .filter(Catch.timer_started_at > first_catch_date).first()
