@@ -51,16 +51,16 @@ def catch(nfc_id):
     if all_catches == 0:
         catch = Catch(team_id=team.id, currently_held=True)
         catch.save()
-        return 'ok'
+        return 'true'
     elif can_recatch > 0:
         currently_held_by = Catch.query \
             .filter(Catch.currently_held.is_(True)).first()
         Catch.update(currently_held_by.id, currently_held=False)
         catch = Catch(team_id=team.id, currently_held=True)
         catch.save()
-        return 'recatch'
+        return 'true'
     else:
-        return 'do nothin'
+        return 'false'
 
 
 @api.route('/start_timer/<nfc_id>', methods=['GET'])
@@ -74,8 +74,8 @@ def start_timer(nfc_id):
         Catch.update(start_timer.first().id,
                      timer_started_at=datetime.datetime.utcnow())
     else:
-        return 'do nothin'
-    return 'ok'
+        return 'false'
+    return 'true'
 
 
 @api.route('/heartbeat/<nfc_id>', methods=['GET'])
