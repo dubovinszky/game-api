@@ -38,7 +38,7 @@ def _make_response(json):
 @api.route('/where', methods=['GET'])
 def where():
     now = datetime.datetime.now()
-    if now.weekday() > 4 or now.hour < 9 or now.hour >= 16:
+    if now.weekday() > 4 or now.hour < 9 or now.hour >= 23:
         return _make_response({'team_name': None, 'time': None})
 
     first_catch_date = datetime.datetime(now.year, now.month, now.day, 8, 0)
@@ -114,7 +114,7 @@ def heartbeat(nfc_id):
     #         'from': catch.timer_started_at,
     #         'to': datetime.datetime.utcnow()})
     #     return str(datetime.timedelta(seconds=res.first()[0] * 60))
-    return 'do nothin'
+    return 'true'
 
 
 @api.route('/add_team', methods=['POST'])
